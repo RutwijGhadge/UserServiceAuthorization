@@ -20,9 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -35,7 +33,6 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
@@ -44,9 +41,8 @@ import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 @EnableWebSecurity
 public class SecurityConfig {
 
-        @Autowired
-        private BCryptPasswordEncoder bCryptPasswordEncoder;
-
+//        @Autowired
+//        private BCryptPasswordEncoder bCryptPasswordEncoder;
 
         @Bean
         @Order
@@ -75,14 +71,18 @@ public class SecurityConfig {
         @Order
         public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
                 throws Exception {
-            http
-                    .authorizeHttpRequests((authorize) -> authorize
-                            .anyRequest().authenticated()
-                    )
-                    // Form login handles the redirect to the login page from the
-                    // authorization server filter chain
-                    .formLogin(Customizer.withDefaults());
-
+//            http
+//                    .authorizeHttpRequests((authorize) -> authorize
+//                            .anyRequest().authenticated()
+//                    )
+//                    // Form login handles the redirect to the login page from the
+//                    // authorization server filter chain
+//                    .formLogin(Customizer.withDefaults());
+//
+//            return http.build();
+            http.cors().disable();
+            http.csrf().disable();
+            http.authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll());
             return http.build();
         }
 
