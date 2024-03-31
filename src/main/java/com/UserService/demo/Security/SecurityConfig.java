@@ -152,3 +152,13 @@ public class SecurityConfig {
             return AuthorizationServerSettings.builder().build();
         }
 }
+/*
+A Spring Security filter chain for the Protocol Endpoints.
+A Spring Security filter chain for authentication.
+An instance of UserDetailsService for retrieving users to authenticate.
+An instance of RegisteredClientRepository for managing clients.
+An instance of com.nimbusds.jose.jwk.source.JWKSource for signing access tokens.
+An instance of java.security.KeyPair with keys generated on startup used to create the JWKSource above.
+An instance of JwtDecoder for decoding signed access tokens.
+An instance of AuthorizationServerSettings to configure Spring Authorization Server.
+ */

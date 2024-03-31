@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 
-//Override the UserDetailsService
+//Override the UserDetailsService : we want to use the users from over Repo
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 

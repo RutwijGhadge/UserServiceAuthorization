@@ -1,14 +1,20 @@
 package com.UserService.demo.Services;
 
+import com.UserService.demo.Clients.KafkaProducerClient;
+import com.UserService.demo.DTOs.SendMessageDTO;
+import com.UserService.demo.DTOs.UserDTO;
 import com.UserService.demo.Model.Session;
 import com.UserService.demo.Model.SessionStatus;
 import com.UserService.demo.Model.User;
 import com.UserService.demo.Repository.SessionRepo;
 import com.UserService.demo.Repository.UserRepo;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import org.antlr.v4.runtime.misc.Pair;
+import org.apache.kafka.common.network.Send;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -37,20 +43,43 @@ public class AuthService {
     @Autowired
     private SecretKey secret;
 
+    @Autowired
+    private KafkaProducerClient kafkaProducerClient;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+    //for Serialization-Deserialization
+
     public User signUp(String email, String password){
        Optional<User> userOptional= userRepo.findByEmail(email);
        if(userOptional.isEmpty()){//if the user is not there
            //we should create User
             User user=new User();
             user.setEmail(email);
-           // user.setPassword(password);
+           //user.setPassword(password);
            //now storing the Encrypted Password in the DB
             user.setPassword(bCryptPasswordEncoder.encode(password));
             User savedUser=userRepo.save(user);
             return savedUser;
        }
 
-       return userOptional.get();//return the already present user
+
+        UserDTO userDTO=new UserDTO();
+        userDTO.setEmail(email);
+
+        try {
+            SendMessageDTO sendMessageDTO=new SendMessageDTO();
+
+            sendMessageDTO.setTo(email);
+            sendMessageDTO.setFrom("admin@scaler.com");
+            sendMessageDTO.setSubject("Welcome : " +email);
+            sendMessageDTO.setBody("Sign up Successful in Application ");
+//put message in queue
+            kafkaProducerClient.sendMessage("sendEmail", objectMapper.writeValueAsString(sendMessageDTO));
+            } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        return userOptional.get();//return the already present user
     }
 
     public Pair<User,MultiValueMap<String,String>> login(String email,String password){
@@ -78,24 +107,31 @@ public class AuthService {
                   "   \"expirationDate\": \"2ndApril2024\"\n" +
               "}";*/
 
-        //byte[]Content=Message.getBytes(StandardCharsets.UTF_8);
+      /*  1. convert message to Byte Array
+        byte[]Content=Message.getBytes(StandardCharsets.UTF_8);
 
-        // String token= Jwts.builder().content(Content).compact();//Generation of token
+        //Generation of token
+         String token= Jwts.builder().content(Content).compact();
 
+       // setting the cookie value to token
+         MultiValueMap<String,String>headers=new LinkedMultiValueMap();
+         headers.add(HttpHeaders.SET_COOKIE,token);
+         String token= Jwts.builder().content(Content).signWith(secret).compact();
 
-        // headers.add(HttpHeaders.SET_COOKIE,token);//setting the cookie value to token
-        //String token= Jwts.builder().content(Content).signWith(secret).compact();
+         return new Pair<User,MultiValueMap<String,String>>(user,headers);
 
+        //Adding the Signature in JWT token
         //Bean named SecretKey is created in SpringSecurity Config file
-//        MacAlgorithm macAlgorithm=Jwts.SIG.HS256;
-//        SecretKey secret=macAlgorithm.key().build();
-        //signing token with the secret to avoid the Tampering with Token
+        MacAlgorithm macAlgorithm=Jwts.SIG.HS256;
+        SecretKey secret=macAlgorithm.key().build();
+         String token= Jwts.builder().claims(jwtData).signWith(secret).compact();
+        //signing token with the secret to avoid the Tampering with Token */
 
 
         Map<String,Object>jwtData=new HashMap<>();
         jwtData.put("email",user.getEmail());
         jwtData.put("roles",user.getRoleList());
-        long getTimeInMilis=System.currentTimeMillis();
+        Long getTimeInMilis=System.currentTimeMillis();
         jwtData.put("expiryTime",new Date(getTimeInMilis+10000000));
         jwtData.put("createdAT",new Date(getTimeInMilis));
 
@@ -110,11 +146,10 @@ public class AuthService {
         session.setExpiryAt(new Date(getTimeInMilis+10000));
         sessionRepo.save(session);
 
-
         return new Pair<User,MultiValueMap<String,String>>(user,headers);
         //returning user along with token
     }
-
+//step 5 -> Client will be coming to Resource Server ( token + Response from user)
     public Boolean validate(String token,Long userId){
             Optional<Session>optionalSession=sessionRepo.findByTokenAndUser_Id(token,userId);
 
@@ -131,8 +166,8 @@ public class AuthService {
         Claims claims=parser.parseSignedClaims(tokens).getPayload();//obtain the payload
         System.out.println(claims);
 
-        long nowInMillis=System.currentTimeMillis();
-        long tokenExpiry=(Long)claims.get("expiryTime");
+        Long nowInMillis=System.currentTimeMillis();
+        Long tokenExpiry=(Long)claims.get("expiryTime");
         //in Map key for ExpiryTime: "expiryTime"
 
         if(nowInMillis>tokenExpiry){
