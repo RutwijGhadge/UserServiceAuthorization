@@ -29,7 +29,7 @@ public class AuthController {
         try{
             User user=authService.signUp(signupRequestDTO.getEmail(),signupRequestDTO.getPassword());
             UserDTO userDTO=getUserDTO(user);
-            return new ResponseEntity<UserDTO>(userDTO, HttpStatus.OK);
+            return new ResponseEntity<>(userDTO, HttpStatus.OK);
         }catch(Exception e){
             return new ResponseEntity<>(null,HttpStatus.BAD_REQUEST);
         }

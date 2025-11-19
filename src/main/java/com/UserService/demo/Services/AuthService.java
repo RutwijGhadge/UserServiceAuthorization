@@ -57,10 +57,9 @@ public class AuthService {
             User user=new User();
             user.setEmail(email);
            //user.setPassword(password);
-           //now storing the Encrypted Password in the DB
+           //Now storing the Encrypted Password(Created with bCryptPasswordEncoder) in the DB
             user.setPassword(bCryptPasswordEncoder.encode(password));
-            User savedUser=userRepo.save(user);
-            return savedUser;
+           return userRepo.save(user);
        }
 
 
@@ -81,6 +80,8 @@ public class AuthService {
         }
         return userOptional.get();//return the already present user
     }
+
+
 
     public Pair<User,MultiValueMap<String,String>> login(String email,String password){
         Optional<User> userOptional=userRepo.findByEmail(email);

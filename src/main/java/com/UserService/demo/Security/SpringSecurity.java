@@ -13,7 +13,7 @@ import javax.crypto.SecretKey;
 @Configuration
 public class SpringSecurity {
     //SecurityFilterChain-> this is something which is getting Controlled & we need to override this
-    //we want that SpringBoot should take this bean Rather than Creating on its own
+    //we want that SpringBoot should take this bean Rather than Creating on its own bean of SecurityFilterChain
     //overriding the properties
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
@@ -25,7 +25,7 @@ public class SpringSecurity {
     }
 
 
-    //creating bean for BCryptPasswordEncoder
+    //Creating bean for BCryptPasswordEncoder
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder(){
         return new BCryptPasswordEncoder();
